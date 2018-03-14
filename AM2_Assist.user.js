@@ -173,8 +173,29 @@
     }, "STAR PROGRESS BAR");
 
     /* ENHANCE AIRCRAFT PROFIBILITY DETAIL */
-    define(["aircraft/show/[0-9]/flights"], function() {
-        //
+    define(["aircraft/show/[0-9]+"], function () {
+        let prefixUrl = window.location.href + '/flights';
+        let params = [];
+        let localToday = new Date($.now());
+        for (var i = 0; i < 6; i++) {
+            params.push(`?date=${localToday.getUTCFullYear()}-${localToday.getUTCMonth() + 1}-${localToday.getUTCDate() + i}`);
+        }
+        loadFlightDetail(prefixUrl, params).then((r) => {
+            console.log(r);
+            let targetBox = $("#aircraftCharacteristicLeft .aircraftGlobalInformation div:not([class])");
+            targetBox.attr("style", "height:370px");
+            for (var key in r) {
+                //console.log(key);
+                let dateResult = $(
+                    `<div class="dashMachine">
+                        <span>${key} estimated result :</span>
+                        <span><b>${r[key].result} $</b></span>
+                    </div>`);
+                $("#aircraftCharacteristicLeft .aircraftGlobalInformation div:not([class])");
+                targetBox.append(dateResult);
+                //console.log(dateResult);
+            }
+        });
     }, "ENHANCE AIRCRAFT PROFIBILITY DETAIL");
 
     /* RECONFIGURATION ASSIST */
@@ -393,28 +414,28 @@
     function loadFlightDetail(flightUrl, params) {
         return new Promise(function(resolve, reject) {
             let ret = {};
-            params.forEach( p=> {
+            Promise.all(params.map( p=> 
                 $.get(`${flightUrl}${p}`).then((data) => {
                     let detail = parseFlightDetailRawData($($.parseHTML(data)));
                     // p is like "?date=2018-03-08"
                     let date = p.substring(6);
                     ret[date] = detail;
-                });
+                }))).then(()=>{
+                resolve(ret);
             });
-            resolve(ret);
         });
     }
 
     function parseFlightDetailRawData(data) {
         //instead of parsing elements one by one, I'd rather put them all into an array and then filter
-        let ret = []
-        data.find("div.showLineOrHubFlights table").find("tr td.tableNumeric").each(function(){ret.push($(this).text())});
-        let detail={}
-        detail["departure"] = ret[0];
-        detail["arrival"] = ret[1];
-        detail["passengers"] = ret[2];
-        detail["turnover"] = ret[9];
-        detail["result"] = ret[10];
+        let ret = [];
+        data.find("div.showLineOrHubFlights table").find("tr td.tableNumeric").each(function(){ret.push($(this).text());});
+        let detail={};
+        detail['departure'] = ret[0];
+        detail['arrival'] = ret[1];
+        detail['passengers'] = ret[2];
+        detail['turnover'] = ret[9];
+        detail['result'] = ret[10];
         return detail;
     }
 
