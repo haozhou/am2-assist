@@ -173,7 +173,7 @@
     }, "STAR PROGRESS BAR");
 
     /* ENHANCE AIRCRAFT PROFIBILITY DETAIL */
-    define(["aircraft/show/[0-9]", "aircraft/buy/new/[0-9]+/[^/]+/.*"], function() {
+    define(["aircraft/show/[0-9]/flights"], function() {
         //
     }, "ENHANCE AIRCRAFT PROFIBILITY DETAIL");
 
@@ -387,6 +387,35 @@
             }
             return parseInt(rankingBox.replace(/[^0-9]/g, ""));
         });
+    }
+
+    // Extract flight detail for the given flight.
+    function loadFlightDetail(flightUrl, params) {
+        return new Promise(function(resolve, reject) {
+            let ret = {};
+            params.forEach( p=> {
+                $.get(`${flightUrl}${p}`).then((data) => {
+                    let detail = parseFlightDetailRawData($($.parseHTML(data)));
+                    // p is like "?date=2018-03-08"
+                    let date = p.substring(6);
+                    ret[date] = detail;
+                });
+            });
+            resolve(ret);
+        });
+    }
+
+    function parseFlightDetailRawData(data) {
+        //instead of parsing elements one by one, I'd rather put them all into an array and then filter
+        let ret = []
+        data.find("div.showLineOrHubFlights table").find("tr td.tableNumeric").each(function(){ret.push($(this).text())});
+        let detail={}
+        detail["departure"] = ret[0];
+        detail["arrival"] = ret[1];
+        detail["passengers"] = ret[2];
+        detail["turnover"] = ret[9];
+        detail["result"] = ret[10];
+        return detail;
     }
 
     function loadNetworkData() {
